@@ -158,7 +158,7 @@ def userRetweetsById(userId):
 
 def getUserTweetsLikes(id, nextToken):
     response = None
-    if(next_token != None):
+    if(nextToken != None):
         response = requests.get("https://api.twitter.com/2/users/" + str(id) + "/liked_tweets?max_results=75&pagination_token=" + nextToken + "&expansions=author_id&tweet.fields=created_at,author_id", headers=BEARER_TOKEN)
     else:
         response = requests.get("https://api.twitter.com/2/users/" + str(id) + "/liked_tweets?max_results=75&expansions=author_id&tweet.fields=created_at,author_id", headers=BEARER_TOKEN)
@@ -285,9 +285,9 @@ def getTweetsByHashtag(hashtag, amount, nextToken):
 
 
 def getUserId(username):
-	response = requests.get("https://api.twitter.com/2/users/by/username/" + username + "?tweet.fields=id", headers=BEARER_TOKEN)
-
-	return response.json()['data']['id']
+    response = requests.get("https://api.twitter.com/2/users/by/username/" + username + "?tweet.fields=id", headers=BEARER_TOKEN)
+    print(response.json())
+    return response.json()['data']['id']
 
 def getUserById(userId):
     response = requests.get("https://api.twitter.com/2/users/" + str(userId) + "?user.fields=created_at,location,name,username", headers=BEARER_TOKEN)
@@ -682,7 +682,7 @@ def followByHashtag(hashtag, amount, recursion, isThread):
 def unfollowMyFollowings(amount):
     myUserId = getUserId(USERNAME)
     user = getUserInfoById(myUserId)
-    usersList = ing(myUserId, amount)
+    usersList = getUserFollowers(myUserId, amount)
 
     filteredUsers = filterUsers(usersList)
     filteredUsers = usersList
@@ -697,7 +697,7 @@ def unfollowMyFollowings(amount):
         response = unfollowUser(myUserId, user.id)
         print(response)
         print("Successfuly unfollowed user: " + user.username)
-        curs.execute("DELETE FROM followed_users WHERE follow_id = '" + str(userIdUnfollow) + "'")
+        curs.execute("DELETE FROM followed_users WHERE follow_id = '" + str(user.id) + "'")
         t.sleep(random.randrange(30, 65))
 
 def databseFollowings():
@@ -748,7 +748,7 @@ def getUserMeFollowers():
     userFollowersAmount = getUserInfoById(userId).public_metrics.followers_count
     while(amount < userFollowersAmount):
         try:
-            curs.execute("SELECT * FROM user_follows_next_token WHERE username = '" + str(username) + "'")
+            curs.execute("SELECT * FROM user_follows_next_token WHERE username = '" + str(USERNAME) + "'")
             nextToken = curs.fetchone()
             nextToken = nextToken[2]
             print(nextToken + " fetch")
@@ -960,7 +960,7 @@ if not isMultiThred:
         exportUsersTweets(str(args.username), int(args.amount))
         print("Bot finish with scraping tweets of user: "  + args.username + " You can run again.")
     if args.unlike == "tweets":
-        unlikeLikedTweets(int(args.amount), e)
+        unlikeLikedTweets(int(args.amount))
         print("Bot finish with unliking tweets. You can run again")
     if args.like == "usrtweets":
         userId = getUserId(str(args.username))
